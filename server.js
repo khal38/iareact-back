@@ -8,7 +8,7 @@ app.use(bodyParser.json());
 const database = {
   users: [
     {
-      id: "123",
+      id: "120",
       name: "dey",
       email: "dey@mail.com",
       password: "cookies",
@@ -16,7 +16,7 @@ const database = {
       joined: new Date()
     },
     {
-      id: "124",
+      id: "121",
       name: "wes",
       email: "wes@mail.com",
       password: "cookies",
@@ -48,7 +48,7 @@ app.post("/register", (req, res) => {
   const { name, email, password } = req.body;
 
   database.users.push({
-    id: "124",
+    id: "125",
     name: name,
     email: email,
     password: password,
@@ -62,21 +62,33 @@ app.post("/register", (req, res) => {
 //Profile
 app.get("/profile/:id", (req, res) => {
   const { id } = req.params;
+  let found = false;
   database.users.forEach(user => {
     if (user.id === id) {
+      found = true;
       return res.json(user);
-    } else {
-      res.json("no match");
     }
   });
+  if (!found) {
+    res.status(400).json("not found");
+  }
 });
 
 //Image
 
 app.post("/image", (req, res) => {
-
-
-    
+  const { id } = req.body;
+  let found = false;
+  database.users.forEach(user => {
+    if (user.id === id) {
+      found = true;
+      user.entries++;
+      return res.json(user.entries);
+    }
+  });
+  if (!found) {
+    res.status(400).json("not found");
+  }
 });
 
 app.listen(3001);

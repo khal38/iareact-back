@@ -3,7 +3,9 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt-nodejs");
 const cors = require("cors");
 const knex = require("knex");
-
+const register = require("./controllers/register");
+const signin = require("./controllers/signin");
+const image = require("./controllers/image");
 const db = knex({
   client: "pg",
   connection: {
@@ -14,142 +16,24 @@ const db = knex({
   }
 });
 
-//this return a promise who return data so i have to do then
-/*db
-  .select("*")
-  .from("users")
-  .then(data => {
-    console.log(data);
-  });*/
-
 const app = express();
 app.use(cors());
 
 app.use(bodyParser.json());
 
-const database = {
-  users: [
-    {
-      id: "120",
-      name: "dey",
-      email: "dey@mail.com",
-      password: "cookies",
-      entries: 0,
-      joined: new Date()
-    },
-    {
-      id: "121",
-      name: "wes",
-      email: "wes@mail.com",
-      password: "cookies",
-      entries: 0,
-      joined: new Date()
-    }
-  ],
-  loggin: [
-    {
-      id: "987",
-      hash: "",
-      email: "dey@mail.com"
-    }
-  ]
-};
-
-//Signin
-app.post("/signin", (req, res) => {
-  // i want the user who this req.body.email and return me email and hash
-  db.select("email", "hash")
-    .from("login")
-    .where("email", "=", req.body.email)
-    .then(data => {
-      const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-
-      if (isValid) {
-        return db
-          .select("*")
-          .from("users")
-          .where("email", "=", req.body.email)
-          .then(user => {
-            // console.log(user)
-            res.json(user[0]);
-          })
-          .catch(err => res.status(400).json("unable to get user"));
-      } else {
-        res.status(400).json("wrong credentials");
-      }
-    })
-    .catch(err => res.status(400).json("wrong credentials"));
-});
-
+//Signin ( we running handleSignIn with db and bcrypt and when signin get head we passing the request response)
+app.post("/signin",  signin.handleSignIn(db, bcrypt));;
 //Register
 app.post("/register", (req, res) => {
-  const { name, email, password } = req.body;
-
-  const hash = bcrypt.hashSync(password);
-  //first we insert into loggin table, we return the email we inserted
-  //logginEmail from returning and we insert this email in users
-  //
-  db.transaction(trx => {
-    trx
-      .insert({
-        hash: hash,
-        email: email
-      })
-      .into("login")
-      .returning("email")
-      .then(loginEmail => {
-        return (
-          trx("users")
-            // bidding with the response
-            .returning("*")
-            .insert({
-              email: loginEmail[0],
-              name: name,
-              joined: new Date()
-              // if we get a response returne all from returning,
-            })
-            .then(user => {
-              res.json(user[0]);
-            })
-        );
-      })
-      .then(trx.commit)
-      .catch(trx.rollback);
-  }).catch(err => res.status(400).json("unable to register"));
+  register.handleRegister(req, res, db, bcrypt);
 });
-
 //Profile
-// useful for update a name or email
 app.get("/profile/:id", (req, res) => {
-  const { id } = req.params;
-  // let found = false;
-  db.select("*")
-    .from("users")
-    // in ES6 id :id   is  id because property as the same
-    .where({ id })
-    .then(user => {
-      // grap array of the current user
-      if (user.length) {
-        res.json(user[0]);
-      } else {
-        res.status(400).json("Not found");
-      }
-    })
-    .catch(err => res.status(400).json("error getting user"));
+  profile.handleProfile(req, res, db, bcrypt);
 });
-
 //Image
-
 app.put("/image", (req, res) => {
-  const { id } = req.body;
-  db("users")
-    .where("id", "=", id)
-    .increment("entries", 1)
-    .returning("entries")
-    .then(entries => {
-      res.json(entries[0]);
-    })
-    .catch(err => res.status(400).json("unable to get entries"));
+  image.handleImage(req, res, db, bcrypt);
 });
 
 app.listen(3001);

@@ -1,6 +1,10 @@
 const handleRegister = (req, res, db , bcrypt) => {
+
     const { name, email, password } = req.body;
-  
+    //secruty layer
+    if ( !email || !name || !password){
+      return res.status(400).json('incorrect form submission')
+    }
     const hash = bcrypt.hashSync(password);
     //first we insert into loggin table, we return the email we inserted
     //logginEmail from returning and we insert this email in users

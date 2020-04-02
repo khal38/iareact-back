@@ -21,6 +21,11 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
+//Test route
+app.get("/", (req, res) => {
+  res.send("It's working");
+});
+
 //Signin ( we running handleSignIn with db and bcrypt and when signin get head we passing the request response)
 app.post("/signin",  signin.handleSignIn(db, bcrypt));;
 //Register
@@ -40,7 +45,7 @@ app.post("/imageurl", (req, res) => {
   image.handleApiCall(req, res);
 });
 
-app.listen(process.en.PORT || 3001, ()=>{
+app.listen(process.env.PORT || 3001, ()=>{
   console.log(`app is running on port ${process.env.PORT}`)
 });
 
